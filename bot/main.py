@@ -1,6 +1,6 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta, date
 import http.client
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv
 from os import environ as env
 from time import sleep
 import re
@@ -17,7 +17,7 @@ driver = Firefox()
 driver.set_window_size(1920, 1080)
 
 # environment variables
-load_dotenv(r'vars.env')
+load_dotenv(r'../vars.env')
 
 webhook_url = env.get('webhook_url')
 
@@ -41,11 +41,6 @@ def send(message):
     return result.decode("utf-8")
 
 
-local_timezone_list = str(datetime.now().astimezone().tzinfo).split()
-local_timezone = ''
-for word in local_timezone_list:
-    local_timezone += word[0]
-
 discord_message = ""
 
 driver.get(url='https://www.ufc.com/events')
@@ -54,8 +49,8 @@ sleep(3)
 next_fight_raw = driver.find_element(By.XPATH, "//div[@class='c-card-event--result__date tz-change-data']")
 next_fight_timestamp = int(next_fight_raw.get_attribute('data-main-card-timestamp'))
 fight_date_time = datetime.fromtimestamp(next_fight_timestamp)
-if datetime.now() <= fight_date_time <= datetime.now() + timedelta(hours=24):
-    discord_message += f"# Fight Today {fight_date_time.strftime('%m/%d/%Y')}"
+if datetime.now() <= fight_date_time <= datetime.now() + timedelta(days=4):
+    discord_message += f"# Next Fight <t:{next_fight_timestamp}:D>"
     fight_url_raw = driver.find_element(By.XPATH, "//div[@class='c-card-event--result__date tz-change-data']/a")
     fight_url = str(fight_url_raw.get_attribute('href'))
     driver.get(url=fight_url)
@@ -69,7 +64,13 @@ if datetime.now() <= fight_date_time <= datetime.now() + timedelta(hours=24):
             continue
         event_time = driver.find_element(By.XPATH, f"//div[@id='{event}']//div[@class='c-event-fight-card-broadcaster__time tz-change-inner']").text
         event_time = re.sub(r'.*/\s', '', event_time)
-        discord_message += f"\n\n # {event_name} {event_time}"
+        # convert date and time to unix timestamp
+        date_to_convert = f"{str(fight_date_time.date())} {event_time[:-4]}"
+        # Parse the date string into a datetime object
+        dt_object = datetime.strptime(date_to_convert, "%Y-%m-%d %I:%M %p")
+        # Convert the datetime object to a Unix timestamp
+        fight_timestamp = int(dt_object.timestamp())
+        discord_message += f"\n\n# {event_name} <t:{fight_timestamp}:t>"
         fight_matchups = driver.find_elements(By.XPATH, f"//div[@id='{event}']//div[@class='c-listing-fight__names-row']")
 
         for matchup in fight_matchups:
@@ -78,6 +79,6 @@ if datetime.now() <= fight_date_time <= datetime.now() + timedelta(hours=24):
             fighter_two = name_list[1].get_attribute('href').replace('https://www.ufc.com/athlete/', '').replace('-', " ").upper()
             discord_message += f"\n{fighter_one} **VS** {fighter_two}"
 
-    send(discord_message)
+    print(send(discord_message))
 
 driver.close()
