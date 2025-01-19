@@ -49,7 +49,7 @@ sleep(3)
 next_fight_raw = driver.find_element(By.XPATH, "//div[@class='c-card-event--result__date tz-change-data']")
 next_fight_timestamp = int(next_fight_raw.get_attribute('data-main-card-timestamp'))
 fight_date_time = datetime.fromtimestamp(next_fight_timestamp)
-if datetime.now() <= fight_date_time <= datetime.now() + timedelta(days=4):
+if datetime.now() <= fight_date_time <= datetime.now() + timedelta(days=6):
     discord_message += f"# Next Fight <t:{next_fight_timestamp}:D>"
     fight_url_raw = driver.find_element(By.XPATH, "//div[@class='c-card-event--result__date tz-change-data']/a")
     fight_url = str(fight_url_raw.get_attribute('href'))
