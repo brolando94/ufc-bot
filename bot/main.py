@@ -50,7 +50,7 @@ next_fight_raw = driver.find_element(By.XPATH, "//div[@class='c-card-event--resu
 next_fight_timestamp = int(next_fight_raw.get_attribute('data-main-card-timestamp'))
 fight_date_time = datetime.fromtimestamp(next_fight_timestamp)
 if datetime.now() <= fight_date_time <= datetime.now() + timedelta(days=6):
-    discord_message += f"# Next Fight <t:{next_fight_timestamp}:D>"
+    discord_message += f"# Next Fight <t:{next_fight_timestamp}:R> <t:{next_fight_timestamp}:F>"
     fight_url_raw = driver.find_element(By.XPATH, "//div[@class='c-card-event--result__date tz-change-data']/a")
     fight_url = str(fight_url_raw.get_attribute('href'))
     driver.get(url=fight_url)
@@ -75,8 +75,8 @@ if datetime.now() <= fight_date_time <= datetime.now() + timedelta(days=6):
 
         for matchup in fight_matchups:
             name_list = matchup.find_elements(By.XPATH, f".//a")
-            fighter_one = name_list[0].get_attribute('href').replace('https://www.ufc.com/athlete/', '').replace('-', " ").upper()
-            fighter_two = name_list[1].get_attribute('href').replace('https://www.ufc.com/athlete/', '').replace('-', " ").upper()
+            fighter_one = name_list[0].text
+            fighter_two = name_list[1].text
             discord_message += f"\n{fighter_one} **VS** {fighter_two}"
 
     print(send(discord_message))
